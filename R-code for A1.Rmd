@@ -1,0 +1,28 @@
+# Loading dataframe
+data(anscombe)
+print(anscombe)
+
+# Assigning data to vectors
+x1<- anscombe$x1
+x2<- anscombe$x2
+x3<- anscombe$x3
+x4<- anscombe$x4
+y1<- anscombe$y1
+y2<- anscombe$y2
+y3<- anscombe$y3
+y4<- anscombe$y4
+
+#Create linear regression
+model1<-lm(y1~x1)
+print(model1)
+
+#Calculate R squared
+R1<-summary(model1)
+print(R1)
+plot(x1,y1,main = "Linear regression of the 1st dataset", xlab = "x1", ylab = "y1")
+abline(model1,col="blue")
+
+# Calculate residuals
+residuals1 <- residuals(model1)
+head(residuals1)
+print(residuals1)

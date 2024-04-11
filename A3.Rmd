@@ -1,0 +1,894 @@
+---
+title: "5320Ass3"
+author: "Thai pham- T00727094"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 1.Loading data 
+```{r}
+library(palmerpenguins)
+# Load the data into the variable named 'data'
+palmerpenguins::penguins
+```
+# 2. Subset the data 
+```{r}
+# Load the data into the variable named 'data'
+data <- palmerpenguins::penguins
+
+# Filter the data for male penguins
+maledata <- subset(data, sex == "male")
+
+# View the first few rows of the male_data dataframe
+head(maledata)
+
+# Find unique values for each column in the dataframe
+unique_values <- lapply(maledata, unique)
+
+# Print the unique values for each column
+print(unique_values)
+
+# Find unique values for column sex in the dataframe
+unique_sex <- unique(maledata$sex)
+
+# Print the unique values for column sex
+print(unique_sex)
+```
+# 3.  Create a new variable isGentoo 
+```{r}
+#Indicating whether the species is Gentoo (1) or not (0)
+isGentoo <- ifelse(maledata$species == "Gentoo", 1, 0)
+# Add the isGentoo column to maledata
+maledata$isGentoo <- ifelse(maledata$species == "Gentoo", 1, 0)
+maledata
+```
+
+# 4. Perform EDA
+## 4a. Check the distribution of continuous variables 
+```{r}
+# View summary statistics of continuous variables
+summary(maledata[, c("bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g")])
+
+# Create histograms for continuous variables
+par(mfrow = c(2, 2))
+hist(maledata$bill_length_mm, main = "Bill Length (mm)", xlab = "Bill Length (mm)")
+hist(maledata$bill_depth_mm, main = "Bill Depth (mm)", xlab = "Bill Depth (mm)")
+hist(maledata$flipper_length_mm, main = "Flipper Length (mm)", xlab = "Flipper Length (mm)")
+hist(maledata$body_mass_g, main = "Body Mass (g)", xlab = "Body Mass (g)")
+
+```
+## 4b. Check the distribution by species
+```{r}
+# Boxplot of continuous variables by species
+par(mfrow = c(2, 2))
+boxplot(bill_length_mm ~ species, data = maledata, main = "Bill Length by Species")
+boxplot(bill_depth_mm ~ species, data = maledata, main = "Bill Depth by Species")
+boxplot(flipper_length_mm ~ species, data = maledata, main = "Flipper Length by Species")
+boxplot(body_mass_g ~ species, data = maledata, main = "Body Mass by Species")
+
+```
+## 4c. Check the correllation
+```{r}
+# Correlation matrix
+cor(maledata[, c("bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g")])
+
+# Load necessary library
+library(ggplot2)
+library(GGally)
+
+# Define color palette for species
+species_colors <- c("Adelie" = "grean", "Gentoo" = "blue", "Chinstrap" = "red")
+
+# Scatter plot matrix with species coloring and legend
+ggpairs(maledata[, c("bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g", "species")],
+        aes(color = species), 
+        palette = species_colors)
+
+
+```
+## 4d.Try a logistic regression model => Big issue!!!
+```{r}
+
+# Build a logistic regression model
+model <- glm(isGentoo ~ ., data = maledata[, c("isGentoo", "bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g")], family = binomial)
+
+# Summarize the model
+summary(model)
+
+```
+## 4e. Pairplots
+```{r}
+library(ggplot2)
+library(dplyr)
+# Select continuous variables for modeling
+continuous_vars <- c("bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g")
+
+# Filter data for Gentoo species
+gentoo_data <- maledata %>% filter(species == "Gentoo")
+
+# Create pairplot
+pairplot <- ggplot(gentoo_data) +
+  geom_boxplot(aes(x = species, y = bill_length_mm)) +
+  geom_boxplot(aes(x = species, y = bill_depth_mm)) +
+  geom_boxplot(aes(x = species, y = flipper_length_mm)) +
+  geom_boxplot(aes(x = species, y = body_mass_g)) +
+  facet_wrap(~., scales = "free_y") +
+  theme_bw() +
+  labs(x = "Species (Gentoo)", y = "Value")
+
+# Print pairplot
+print(pairplot)
+
+```
+## 4f. Scatterplot
+```{r}
+library(ggplot2)
+# Load necessary libraries
+library(ggplot2)
+
+# Filter data for Gentoo species
+gentoo_data <- maledata[maledata$species == "Gentoo", ]
+
+# Create scatter plots
+scatterplot_bill <- ggplot(gentoo_data, aes(x = bill_length_mm, y = bill_depth_mm)) +
+  geom_point() +
+  labs(x = "Bill Length (mm)", y = "Bill Depth (mm)") +
+  theme_bw()
+
+scatterplot_flipper <- ggplot(gentoo_data, aes(x = bill_length_mm, y = flipper_length_mm)) +
+  geom_point() +
+  labs(x = "Bill Length (mm)", y = "Flipper Length (mm)") +
+  theme_bw()
+
+scatterplot_mass <- ggplot(gentoo_data, aes(x = bill_length_mm, y = body_mass_g)) +
+  geom_point() +
+  labs(x = "Bill Length (mm)", y = "Body Mass (g)") +
+  theme_bw()
+
+scatterplot_depth_flipper <- ggplot(gentoo_data, aes(x = bill_depth_mm, y = flipper_length_mm)) +
+  geom_point() +
+  labs(x = "Bill Depth (mm)", y = "Flipper Length (mm)") +
+  theme_bw()
+
+scatterplot_depth_mass <- ggplot(gentoo_data, aes(x = bill_depth_mm, y = body_mass_g)) +
+  geom_point() +
+  labs(x = "Bill Depth (mm)", y = "Body Mass (g)") +
+  theme_bw()
+
+scatterplot_flipper_mass <- ggplot(gentoo_data, aes(x = flipper_length_mm, y = body_mass_g)) +
+  geom_point() +
+  labs(x = "Flipper Length (mm)", y = "Body Mass (g)") +
+  theme_bw()
+
+# Arrange plots in a grid
+library(gridExtra)
+grid.arrange(scatterplot_bill, scatterplot_flipper, scatterplot_mass,
+             scatterplot_depth_flipper, scatterplot_depth_mass, scatterplot_flipper_mass,
+             nrow = 2, ncol = 3)
+
+```
+## 4g.Density plot group by IsGentoo
+```{r}
+# Load necessary libraries
+library(ggplot2)
+
+# Create density plots for each continuous variable, grouped by IsGentoo
+density_plots <- lapply(names(maledata)[3:6], function(var) {
+  ggplot(maledata, aes_string(x = var, color = factor(isGentoo))) +
+    geom_density(alpha = 0.5) +
+    labs(x = var, y = "Density") +
+    theme_bw()
+})
+
+# Print density plots in a 2x2 grid
+gridExtra::grid.arrange(grobs = density_plots, ncol = 2)
+
+
+```
+## 4h. Kernel Density Estimation (KDE)
+```{r}
+# Load required libraries
+library(ggplot2)
+
+# Select continuous variables for KDE
+continuous_vars <- c("bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g")
+
+# Create KDE plots for each continuous variable
+kde_plots <- lapply(continuous_vars, function(var) {
+  ggplot(maledata, aes(x = !!sym(var), fill = species)) +
+    geom_density(alpha = 0.5) +
+    labs(title = paste("KDE Plot for", var)) +
+    theme_minimal()
+})
+
+# Arrange KDE plots in a grid
+gridExtra::grid.arrange(grobs = kde_plots, ncol = 2)
+
+```
+
+
+
+# 5. Kernel smoother 
+```{r}
+library(kernlab)
+# Select continuous variables for modeling
+continuous_vars <- c("bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g")
+```
+
+## 5a. Z-score approach and Euclidean distance
+```{r}
+# Standardize variables using z-scores
+male_penguins_zscores <- scale(maledata[continuous_vars])
+# Create kernel smoothers
+kern_smoother_zscores <- ksvm(isGentoo ~ ., data = male_penguins_zscores, kernel = "rbfdot")
+print(kern_smoother_zscores)
+
+
+# Function of Euclidean distance between predicted and actual binary values
+euclidean_distance <- function(predicted, actual) {
+  sqrt(sum((predicted - actual)^2)) / length(actual)
+}
+# Calculate predicted probabilities 
+predicted_probs_zscores <- predict(kern_smoother_zscores)
+# Convert predicted probabilities to binary predictions
+predicted_binary_zscores <- ifelse(predicted_probs_zscores > 0.5, 1, 0)
+# Calculate Euclidean distance 
+euclidean_distance_zscores <- euclidean_distance(predicted_binary_zscores, maledata$isGentoo)
+# Calculate overall accuracy (OA)
+OA_EZ <- sum(predicted_binary_zscores == maledata$isGentoo) / length(maledata$isGentoo)
+# Calculate training error (misclassification rate)
+training_error <- mean(predicted_binary_zscores != maledata$isGentoo)
+
+# Print the training error
+print(paste("Training Error (Euclidean distance, Z-scores approach):", training_error))
+
+# Print the overall accuracy
+print(paste("Overall Accuracy:", OA_EZ))
+
+# Print the model evaluation
+print(paste("Euclidean distance (Z-scores approach):", euclidean_distance_zscores))
+```
+
+### Using other metrics to evaluate the model
+```{r}
+# Metric AUC - ROC 
+library(pROC)
+
+# Compute AUC-ROC
+auc_roc <- roc(maledata$isGentoo, predicted_probs_zscores)
+
+# Plot ROC curve (optional)
+plot(auc_roc, main = "ROC Curve")
+
+# Print AUC value
+auc(auc_roc)
+
+# Metric F1-score
+library(caret)
+
+# Compute the confusion matrix
+conf_matrix <- confusionMatrix(data = factor(predicted_binary_zscores), reference = factor(maledata$isGentoo))
+
+# Extract the F1 score
+f1_score <- conf_matrix$byClass["F1"]
+f1_score
+
+```
+## 5b. Z-score approach and Manhattan distance
+```{r}
+# Standardize variables using z-scores
+male_penguins_zscores <- scale(maledata[continuous_vars])
+# Create kernel smoothers
+kern_smoother_zscores <- ksvm(isGentoo ~ ., data = male_penguins_zscores, kernel = "rbfdot")
+print(kern_smoother_zscores)
+# Function of Manhattan distance between predicted and actual binary values
+manhattan_distance <- function(predicted, actual) {
+  sum(abs(predicted - actual)) / length(actual)
+}
+# Calculate predicted probabilities 
+predicted_probs_zscores <- predict(kern_smoother_zscores)
+# Convert predicted probabilities to binary predictions
+predicted_binary_zscores <- ifelse(predicted_probs_zscores > 0.5, 1, 0)
+# Calculate Manhattan distance 
+manhattan_distance_zscores <- manhattan_distance(predicted_binary_zscores, maledata$isGentoo)
+
+# Calculate overall accuracy (OA)
+OA_MZ <- sum(predicted_binary_zscores == maledata$isGentoo) / length(maledata$isGentoo)
+
+# Print the overall accuracy
+print(paste("Overall Accuracy:", OA_MZ))
+# Print the model evaluation
+print(paste("Manhattan distance (Z-scores approach):", manhattan_distance_zscores))
+
+```
+### Using other metrics to evaluate the model
+```{r}
+# Metric AUC - ROC 
+library(pROC)
+
+# Compute AUC-ROC
+auc_roc <- roc(maledata$isGentoo, predicted_probs_zscores)
+
+# Plot ROC curve (optional)
+plot(auc_roc, main = "ROC Curve")
+
+# Print AUC value
+auc(auc_roc)
+
+# Metric F1-score
+library(caret)
+
+# Compute the confusion matrix
+conf_matrix <- confusionMatrix(data = factor(predicted_binary_zscores), reference = factor(maledata$isGentoo))
+
+# Extract the F1 score
+f1_score <- conf_matrix$byClass["F1"]
+f1_score
+
+```
+
+## 5c. Quantiles approach and Euclidean distance
+```{r}
+# Standardize variables using quantiles
+male_penguins_quantiles <- apply(maledata[continuous_vars], 2, rank) / nrow(maledata)
+# Create kernel smoothers
+kern_smoother_quantiles <- ksvm(isGentoo ~ ., data = male_penguins_quantiles, kernel = "rbfdot")
+print(kern_smoother_quantiles)
+
+# Function of Euclidean distance between predicted and actual binary values
+euclidean_distance <- function(predicted, actual) {
+  sqrt(sum((predicted - actual)^2)) / length(actual)
+}
+# Calculate predicted probabilities 
+predicted_probs_quantiles <- predict(kern_smoother_quantiles)
+# Convert predicted probabilities to binary predictions
+predicted_binary_quantiles <- ifelse(predicted_probs_quantiles > 0.5, 1, 0)
+# Calculate Euclidean distance
+euclidean_distance_quantiles <- euclidean_distance(predicted_binary_quantiles, maledata$isGentoo)
+
+# Calculate overall accuracy (OA)
+OA_EQ <- sum(predicted_binary_quantiles == maledata$isGentoo) / length(maledata$isGentoo)
+
+# Print the overall accuracy
+print(paste("Overall Accuracy:", OA_EQ))
+# Print the model evaluation
+print(paste("Euclidean distance (Quantiles approach):", euclidean_distance_quantiles))
+```
+### Using other metrics to evaluate the model
+```{r}
+# Metric AUC - ROC 
+library(pROC)
+
+# Compute AUC-ROC
+auc_roc <- roc(maledata$isGentoo, predicted_probs_quantiles)
+
+# Plot ROC curve (optional)
+plot(auc_roc, main = "ROC Curve")
+
+# Print AUC value
+auc(auc_roc)
+
+# Metric F1-score
+library(caret)
+
+# Compute the confusion matrix
+conf_matrix <- confusionMatrix(data = factor(predicted_binary_quantiles), reference = factor(maledata$isGentoo))
+
+# Extract the F1 score
+f1_score <- conf_matrix$byClass["F1"]
+f1_score
+```
+
+## 5d. Quantiles approach and Manhattan distance
+```{r}
+# Standardize variables using quantiles
+male_penguins_quantiles <- apply(maledata[continuous_vars], 2, rank) / nrow(maledata)
+# Create kernel smoothers
+kern_smoother_quantiles <- ksvm(isGentoo ~ ., data = male_penguins_quantiles, kernel = "rbfdot")
+print(kern_smoother_quantiles)
+
+# Function of Manhattan distance between predicted and actual binary values
+manhattan_distance <- function(predicted, actual) {
+  sum(abs(predicted - actual)) / length(actual)
+}
+# Calculate predicted probabilities 
+predicted_probs_quantiles <- predict(kern_smoother_quantiles)
+# Convert predicted probabilities to binary predictions
+predicted_binary_quantiles <- ifelse(predicted_probs_quantiles > 0.5, 1, 0)
+# Calculate Euclidean distance
+manhattan_distance_quantiles <- manhattan_distance(predicted_binary_quantiles, maledata$isGentoo)
+
+# Calculate overall accuracy (OA)
+OA_MQ <- sum(predicted_binary_quantiles == maledata$isGentoo) / length(maledata$isGentoo)
+
+# Print the overall accuracy
+print(paste("Overall Accuracy:", OA_MQ))
+# Print the model evaluation
+print(paste("Manhattan_distance (Quantiles approach):", manhattan_distance_quantiles))
+```
+
+### Using other metrics to evaluate the model
+```{r}
+# Metric AUC - ROC 
+library(pROC)
+
+# Compute AUC-ROC
+auc_roc <- roc(maledata$isGentoo, predicted_probs_quantiles)
+
+# Plot ROC curve (optional)
+plot(auc_roc, main = "ROC Curve")
+
+# Print AUC value
+auc(auc_roc)
+
+# Metric F1-score
+library(caret)
+
+# Compute the confusion matrix
+conf_matrix <- confusionMatrix(data = factor(predicted_binary_quantiles), reference = factor(maledata$isGentoo))
+
+# Extract the F1 score
+f1_score <- conf_matrix$byClass["F1"]
+f1_score
+```
+
+## 5e. Summary the results of 4 approaches
+```{r}
+# Create a dataframe for the results
+results <- data.frame(
+  Standardize_Method = c("Z-scores", "Z-scores", "Quantiles", "Quantiles"),
+  Distance_Metric = c("Euclidean", "Manhattan", "Euclidean", "Manhattan"),
+  Distance_Value = c(euclidean_distance_zscores, manhattan_distance_zscores, euclidean_distance_quantiles, manhattan_distance_quantiles),Training_error = c(0.005801,0.005275,0.006382,0.006057),
+  Overall_Accuracy = c(OA_EZ, OA_MZ, OA_EQ, OA_MQ)
+)
+
+# Print the results dataframe
+print(results)
+
+```
+
+
+# 6. Support vector machine approach
+## 6a. Z-socred and Euclidean distance
+```{r}
+# Load the kernlab package
+library(kernlab)
+
+# Standardize the scales using z-scores
+maledata_z <- scale(maledata[, c("bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g")])
+
+# Prepare data
+X <- maledata_z
+y <- maledata$isGentoo
+
+# Build Gaussian Process Regression model
+gpc_model <- ksvm(X, y, type="C-bsvc", kernel="rbfdot")
+
+# Make predictions on training data
+y_pred_train <- predict(gpc_model, X)
+
+# Calculate Euclidean distance
+euclidean_distance <- function(predicted, actual) {
+  sqrt(sum((predicted - actual)^2)) / length(actual)
+}
+
+# Calculate Euclidean distance for training data
+distance_train <- euclidean_distance(y_pred_train, y)
+print(paste("Euclidean distance:", distance_train))
+
+
+```
+
+# 7. Kernel smoother based on bandwidth
+## 7a. Z-scored and Euclidean distance
+```{r}
+# Define a function to calculate Euclidean distance
+euclidean_distance <- function(x1, x2) {
+  return(sqrt(sum((x1 - x2)^2)))
+}
+
+# Define a function to compute the bandwidth using Euclidean distance
+compute_bandwidth <- function(data) {
+  n <- nrow(data)
+  distances <- matrix(0, n, n)
+  
+  # Compute distances between all pairs of data points
+  for (i in 1:n) {
+    for (j in 1:n) {
+      distances[i, j] <- euclidean_distance(data[i, ], data[j, ])
+    }
+  }
+  
+  # Bandwidth is the median of distances
+  bandwidth <- median(distances)
+  return(bandwidth)
+}
+
+# Load necessary library
+library(kernlab)
+
+# Standardize variables using z-scores
+male_penguins_zscores <- scale(maledata[continuous_vars])
+
+# Compute bandwidth
+bandwidth <- compute_bandwidth(male_penguins_zscores)
+
+# Create kernel smoother using computed bandwidth
+kern_smoother <- ksvm(isGentoo ~ ., data = male_penguins_zscores, kernel = "rbfdot", kpar = list(sigma = bandwidth))
+
+# Print the kernel smoother and the model evaluation
+print("Result of Euclidean distance and Z-scores approach")
+print(kern_smoother)
+
+# Calculate overall accuracy (OA)
+OA_EZ <- sum(predicted_binary_zscores == maledata$isGentoo) / length(maledata$isGentoo)
+# Print the overall accuracy
+print(paste("Overall Accuracy:", OA_EZ))
+
+#######
+### Using other metrics to evaluate the model
+# Metric AUC - ROC 
+library(pROC)
+
+# Compute AUC-ROC
+auc_roc <- roc(maledata$isGentoo, predicted_probs_zscores)
+
+# Plot ROC curve (optional)
+plot(auc_roc, main = "ROC Curve")
+
+# Print AUC value
+auc(auc_roc)
+
+# Metric F1-score
+library(caret)
+
+# Compute the confusion matrix
+conf_matrix <- confusionMatrix(data = factor(predicted_binary_zscores), reference = factor(maledata$isGentoo))
+
+# Extract the F1 score
+f1_score <- conf_matrix$byClass["F1"]
+f1_score
+
+```
+## 7b. Z-scored and Manhattan distance
+```{r}
+# Define a function to calculate Manhattan distance
+manhattan_distance <- function(x1, x2) {
+  return(sum(abs(x1 - x2)))
+}
+
+# Define a function to compute the bandwidth using Manhattan distance
+compute_bandwidth_manhattan <- function(data) {
+  n <- nrow(data)
+  distances <- matrix(0, n, n)
+  
+  # Compute distances between all pairs of data points
+  for (i in 1:n) {
+    for (j in 1:n) {
+      distances[i, j] <- manhattan_distance(data[i, ], data[j, ])
+    }
+  }
+  
+  # Bandwidth is the median of distances
+  bandwidth <- median(distances)
+  return(bandwidth)
+}
+
+# Load necessary library
+library(kernlab)
+
+# Standardize variables using z-scores
+male_penguins_zscores <- scale(maledata[continuous_vars])
+
+# Compute bandwidth using Manhattan distance
+bandwidth_manhattan <- compute_bandwidth_manhattan(male_penguins_zscores)
+
+# Create kernel smoother using computed bandwidth and Manhattan distance
+kern_smoother_manhattan <- ksvm(isGentoo ~ ., data = male_penguins_zscores, kernel = "rbfdot", kpar = list(sigma = bandwidth_manhattan))
+
+# Print the kernel smoother using Manhattan distance
+print("Result of Manhattan distance and Z-scores approach")
+print(kern_smoother_manhattan)
+
+# Calculate overall accuracy (OA)
+OA_MZ <- sum(predicted_binary_zscores == maledata$isGentoo) / length(maledata$isGentoo)
+# Print the overall accuracy
+print(paste("Overall Accuracy:", OA_MZ))
+
+####
+# Metric AUC - ROC 
+library(pROC)
+
+# Compute AUC-ROC
+auc_roc <- roc(maledata$isGentoo, predicted_probs_zscores)
+
+# Plot ROC curve (optional)
+plot(auc_roc, main = "ROC Curve")
+
+# Print AUC value
+auc(auc_roc)
+
+# Metric F1-score
+library(caret)
+
+# Compute the confusion matrix
+conf_matrix <- confusionMatrix(data = factor(predicted_binary_zscores), reference = factor(maledata$isGentoo))
+
+# Extract the F1 score
+f1_score <- conf_matrix$byClass["F1"]
+f1_score
+```
+## 7c. Quantiles and Euclidean distance
+```{r}
+# Define a function to calculate Euclidean distance
+euclidean_distance <- function(x1, x2) {
+  return(sqrt(sum((x1 - x2)^2)))
+}
+
+# Define a function to compute the bandwidth using Euclidean distance
+compute_bandwidth <- function(data) {
+  n <- nrow(data)
+  distances <- matrix(0, n, n)
+  
+  # Compute distances between all pairs of data points
+  for (i in 1:n) {
+    for (j in 1:n) {
+      distances[i, j] <- euclidean_distance(data[i, ], data[j, ])
+    }
+  }
+  
+  # Bandwidth is the median of distances
+  bandwidth <- median(distances)
+  return(bandwidth)
+}
+
+# Load necessary library
+library(kernlab)
+
+# Standardize variables using quantiles
+male_penguins_quantiles <- apply(maledata[continuous_vars], 2, rank) / nrow(maledata)
+
+# Compute bandwidth
+bandwidth <- compute_bandwidth(male_penguins_zscores)
+
+# Create kernel smoother using computed bandwidth
+kern_smoother <- ksvm(isGentoo ~ ., data = male_penguins_quantiles, kernel = "rbfdot", kpar = list(sigma = bandwidth))
+
+# Print the kernel smoother
+print("Result of Euclidean distance and quantiles approach")
+print(kern_smoother)
+
+# Calculate overall accuracy (OA)
+OA_EQ <- sum(predicted_binary_quantiles == maledata$isGentoo) / length(maledata$isGentoo)
+
+# Print the overall accuracy
+print(paste("Overall Accuracy:", OA_EQ))
+
+###
+# Metric AUC - ROC 
+library(pROC)
+
+# Compute AUC-ROC
+auc_roc <- roc(maledata$isGentoo, predicted_probs_quantiles)
+
+# Plot ROC curve (optional)
+plot(auc_roc, main = "ROC Curve")
+
+# Print AUC value
+auc(auc_roc)
+
+# Metric F1-score
+library(caret)
+
+# Compute the confusion matrix
+conf_matrix <- confusionMatrix(data = factor(predicted_binary_quantiles), reference = factor(maledata$isGentoo))
+
+# Extract the F1 score
+f1_score <- conf_matrix$byClass["F1"]
+f1_score
+```
+## 7d. Quantiles and Manhattan distance
+```{r}
+# Define a function to calculate Manhattan distance
+manhattan_distance <- function(x1, x2) {
+  return(sum(abs(x1 - x2)))
+}
+
+# Define a function to compute the bandwidth using Manhattan distance
+compute_bandwidth_manhattan <- function(data) {
+  n <- nrow(data)
+  distances <- matrix(0, n, n)
+  
+  # Compute distances between all pairs of data points
+  for (i in 1:n) {
+    for (j in 1:n) {
+      distances[i, j] <- manhattan_distance(data[i, ], data[j, ])
+    }
+  }
+  
+  # Bandwidth is the median of distances
+  bandwidth <- median(distances)
+  return(bandwidth)
+}
+
+# Load necessary library
+library(kernlab)
+
+# Standardize variables using quantiles
+male_penguins_quantiles <- apply(maledata[continuous_vars], 2, rank) / nrow(maledata)
+
+# Compute bandwidth using Manhattan distance
+bandwidth_manhattan <- compute_bandwidth_manhattan(male_penguins_zscores)
+
+# Create kernel smoother using computed bandwidth and Manhattan distance
+kern_smoother_manhattan <- ksvm(isGentoo ~ ., data = male_penguins_quantiles, kernel = "rbfdot", kpar = list(sigma = bandwidth_manhattan))
+
+# Print the kernel smoother using Manhattan distance
+print("Result of Manhattan distance and quantiles approach")
+print(kern_smoother_manhattan)
+
+# Calculate overall accuracy (OA)
+OA_MQ <- sum(predicted_binary_quantiles == maledata$isGentoo) / length(maledata$isGentoo)
+
+# Print the overall accuracy
+print(paste("Overall Accuracy:", OA_MQ))
+
+###
+# Metric AUC - ROC 
+library(pROC)
+
+# Compute AUC-ROC
+auc_roc <- roc(maledata$isGentoo, predicted_probs_quantiles)
+
+# Plot ROC curve (optional)
+plot(auc_roc, main = "ROC Curve")
+
+# Print AUC value
+auc(auc_roc)
+
+# Metric F1-score
+library(caret)
+
+# Compute the confusion matrix
+conf_matrix <- confusionMatrix(data = factor(predicted_binary_quantiles), reference = factor(maledata$isGentoo))
+
+# Extract the F1 score
+f1_score <- conf_matrix$byClass["F1"]
+f1_score
+```
+# KERNEL SMOOTHING METHOD
+```{r}
+# Load the data into the variable named 'data'
+data <- palmerpenguins::penguins
+
+# Filter the data for male penguins
+maledata <- subset(data, sex == "male")
+
+# Indicating whether the species is Gentoo (1) or not (0)
+isGentoo <- ifelse(maledata$species == "Gentoo", 1, 0)
+
+# Add the isGentoo column to maledata
+maledata$isGentoo <- ifelse(maledata$species == "Gentoo", 1, 0)
+
+# Select continuous variables for modeling
+continuous_vars <- c("bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g")
+```
+
+## Density plot grouped by IsGentoo
+```{r}
+# Load necessary libraries
+library(ggplot2)
+
+# Create density plots for each continuous variable, grouped by IsGentoo
+density_plots <- lapply(names(maledata)[3:6], function(var) {
+  ggplot(maledata, aes_string(x = var, color = factor(isGentoo))) +
+    geom_density(alpha = 0.5) +
+    labs(x = var, y = "Density") +
+    theme_bw()
+})
+
+# Print density plots in a 2x2 grid
+gridExtra::grid.arrange(grobs = density_plots, ncol = 2)
+```
+
+## Kernel Density Estimation (KDE)
+```{r}
+# Load required libraries
+library(ggplot2)
+
+# Select continuous variables for KDE
+continuous_vars <- c("bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g")
+
+# Create KDE plots for each continuous variable
+kde_plots <- lapply(continuous_vars, function(var) {
+  ggplot(maledata, aes(x = !!sym(var), fill = species)) +
+    geom_density(alpha = 0.5) +
+    labs(title = paste("KDE Plot for", var)) +
+    theme_minimal()
+})
+
+# Arrange KDE plots in a grid
+gridExtra::grid.arrange(grobs = kde_plots, ncol = 2)
+
+```
+
+## Apply Kernel smoothing method using different approaches
+
+```{r}
+# Method 1: Using z-scores on each of the variables 
+scaled_data_zscore <- scale(maledata[continuous_vars])
+
+# Method 2: Turning all (univariate) variables into quantiles
+scaled_data_quantiles <- apply(maledata[continuous_vars], 2, function(x) ecdf(x)(x))
+
+# Define function to calculate kernel smoother
+kernel_smoother <- function(x, y, h, distance_metric) {
+  n <- nrow(x)
+  predictions <- rep(0, n)
+  
+  for (i in 1:n) {
+    weights <- rep(0, n)
+    
+    for (j in 1:n) {
+      if (distance_metric == "Euclidean") {
+        dist_ij <- sqrt(sum((x[i,] - x[j,])^2))
+      } else if (distance_metric == "Manhattan") {
+        dist_ij <- sum(abs(x[i,] - x[j,]))
+      }
+      
+      weights[j] <- exp(-dist_ij^2 / (2 * h^2))
+    }
+    
+    predictions[i] <- sum(weights * y)
+  }
+  
+  return(predictions)
+}
+
+# Define function to calculate training error
+calculate_training_error <- function(predictions, actual) {
+  result <- ifelse(predictions > 0.5, 1, 0) == actual
+  accuracy <- sum(result) / length(result)
+  training_error <- 1 - accuracy  # Training error is 1 - accuracy
+  return(training_error)
+}
+
+# Define a range of bandwidth values to try
+bandwidth_values <- c(0.1, 0.3, 0.5, 0.7, 1)
+
+# Initialize variables to store results
+training_errors <- matrix(NA, nrow = length(bandwidth_values), ncol = 4,
+                          dimnames = list(bandwidth_values, 
+                                          c("Z-score_Euclidean", "Z-score_Manhattan",
+                                            "Quantiles_Euclidean", "Quantiles_Manhattan")))
+
+# Loop through each bandwidth value
+for (i in 1:length(bandwidth_values)) {
+  bw <- bandwidth_values[i]
+  
+  # Method 1: Z-scores with Euclidean distance
+  predictions_zscore_euclidean <- kernel_smoother(scaled_data_zscore, isGentoo, bw, "Euclidean")
+  training_errors[i, "Z-score_Euclidean"] <- calculate_training_error(predictions_zscore_euclidean, isGentoo)
+  
+  # Method 2: Z-scores with Manhattan distance
+  predictions_zscore_manhattan <- kernel_smoother(scaled_data_zscore, isGentoo, bw, "Manhattan")
+  training_errors[i, "Z-score_Manhattan"] <- calculate_training_error(predictions_zscore_manhattan, isGentoo)
+  
+  # Method 3: Quantiles with Euclidean distance
+  predictions_quantiles_euclidean <- kernel_smoother(scaled_data_quantiles, isGentoo, bw, "Euclidean")
+  training_errors[i, "Quantiles_Euclidean"] <- calculate_training_error(predictions_quantiles_euclidean, isGentoo)
+  
+  # Method 4: Quantiles with Manhattan distance
+  predictions_quantiles_manhattan <- kernel_smoother(scaled_data_quantiles, isGentoo, bw, "Manhattan")
+  training_errors[i, "Quantiles_Manhattan"] <- calculate_training_error(predictions_quantiles_manhattan, isGentoo)
+}
+
+# Print all results including bandwidth and training error for each approach
+cat("Training Errors for Different Bandwidths and Methods:\n")
+print(training_errors)
+
+```

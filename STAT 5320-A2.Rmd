@@ -1,0 +1,351 @@
+---
+title: "STAT 5320 - Assignment 2"
+author: "Pham Thi Thai - T00727094"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r cache=TRUE, echo=FALSE, results='hide}
+library(tidyverse)
+library(ggplot2)
+```
+
+# 2. Bushes Data
+
+```{r cache=TRUE, echo=FALSE, results='hide'}
+#Exploring the data
+plants<- read.csv("plants.csv")
+head(plants)
+names(plants)
+str(plants)
+```
+```{r}
+# Đếm số lượng quan sát cho mỗi loài cây
+table(plants$species)
+plants$species
+
+
+```
+
+```{r cache=TRUE, echo=FALSE}
+# Create scatter plot with regression line
+ggplot(plants, aes(x = width, y = height)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Scatter Plot of Height vs. Width",
+       x = "Width",
+       y = "Height")
+
+```
+```{r cache=TRUE}
+# Calculate the mean of plant width and plant height
+mean_width <- mean(plants$width)
+mean_height <- mean(plants$height)
+
+# Calculate the slope (m) and intercept (b) of the regression line
+m <- cov(plants$width, plants$height) / var(plants$width)
+b <- mean_height - m * mean_width
+
+# Interpret the slope and intercept
+cat("Slope (m):", m, "\n")
+cat("Intercept (b):", b, "\n")
+
+```
+```{r cache=TRUE}
+# Perform linear regression
+model <- lm(height ~ width, data =plants)
+
+# Print the summary of the regression model
+summary(model)
+```
+
+```{r cache=TRUE}
+# Create a new regression model using two main effects: width and species
+model <- lm(height ~ width + species, data = plants)
+
+# Print the summary of the regression model
+summary(model)
+
+# Create scatter plot of height against width, distinguishing species
+ggplot(plants, aes(x = width, y = height, color = species)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Scatter Plot of Height vs. Width by Species",
+       x = "Width",
+       y = "Height")
+
+
+```
+```{r}
+# Create a new regression model using two main effects: width and species
+model <- lm(height ~ width + species, data = plants)
+
+# Create scatter plot of height against width, distinguishing species and faceting by species
+ggplot(plants, aes(x = width, y = height)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  facet_wrap(~ species, scales = "free") +
+  labs(title = "Scatter Plot of Height vs. Width by Species",
+       x = "Width",
+       y = "Height")
+
+```
+# PART 1
+```{r cache=TRUE}
+# Explore the data
+edata<-read.csv("temp.csv")
+head(edata)
+str(edata)
+names(edata)
+```
+```{r cache=TRUE}
+model<-lm(Net.consumption~MeanTemp,data = edata)
+summary(model)
+```
+```{r cache=TRUE}
+# Define the linear regression equation
+linear_regression <- function(x) {
+  y <- 15.429 - 0.196 * x
+  return(y)
+}
+
+# Define the outside temperatures
+temperatures <- c(-40, -20, 0, 20, 40)
+
+# Calculate the point estimates for average electricity consumption
+estimated_consumption <- linear_regression(temperatures)
+
+# Print the results
+for (i in 1:length(temperatures)) {
+  cat("At outside temperature", temperatures[i], "°C, estimated average electricity consumption is", estimated_consumption[i], "\n")
+}
+
+```
+```{r cache=TRUE}
+# Define the linear regression equation
+linear_regression <- function(x) {
+  y <- 15.429 - 0.196 * x
+  return(y)
+}
+
+# Define the outside temperatures
+temperatures <- seq(-50, 50, by = 10) # Generate temperatures from -50°C to 50°C
+
+# Calculate the corresponding electricity consumption using the linear regression equation
+estimated_consumption <- linear_regression(temperatures)
+
+# Create a data frame with the temperatures and estimated consumption
+data <- data.frame(Temperature = temperatures, Consumption = estimated_consumption)
+
+# Create the plot
+ggplot(edata, aes(x = MeanTemp, y = Net.consumption)) +
+  geom_point() +  # Add points for the data
+  geom_smooth(method = "lm", formula = y ~ x, se = FALSE, color = "blue") +  # Add linear regression line
+  labs(x = "Mean Temperature", y = "Net Consumption", title = "Linear Regression Model") +  # Add labels
+  theme_minimal()  # Set minimal theme
+
+```
+```{r cache=TRUE}
+# Fit a quadratic regression model
+quadratic_model <- lm(Net.consumption ~ MeanTemp + I(MeanTemp^2), data = edata)
+
+# Summarize the model
+summary(quadratic_model)
+
+```
+```{r cache=TRUE}
+library(ggplot2)
+
+# Define Mean Temperatures for estimation
+mean_temperatures <- c(-40, -20, 0, 20, 40)
+
+# Calculate Net Consumption using the quadratic model
+estimated_net_consumption <- predict(quadratic_model, newdata = data.frame(MeanTemp = mean_temperatures))
+
+# Combine the estimated values with the MeanTemp values
+estimated_data <- data.frame(MeanTemp = mean_temperatures, Net.consumption = estimated_net_consumption)
+
+# Create scatter plot with overlayed quadratic model and estimated values
+ggplot(edata, aes(x = MeanTemp, y = Net.consumption)) +
+  geom_point() +  # Add points for the original data
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2), color = "blue", se = FALSE) +  # Overlay quadratic model
+  geom_point(data = estimated_data, aes(colour = "Estimated values"), size = 3) +  # Add points for estimated values
+  scale_color_manual(values = "red") +  # Set color for estimated values
+  labs(x = "Mean Temperature", y = "Net Consumption", title = "Scatter Plot with Quadratic Model Overlay") +  # Add labels
+  theme_minimal()  # Set minimal theme
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+```{r cache=TRUE}
+# Define Mean Temperatures for estimation
+mean_temperatures <- c(-40, -20, 0, 20, 40)
+
+# Create a data frame with MeanTemp values
+new_data <- data.frame(MeanTemp = mean_temperatures)
+
+# Predict Net.consumption using the quadratic regression model
+predicted_values <- predict(quadratic_model, newdata = new_data)
+
+# Display the predicted values
+predicted_values
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r cache=TRUE}
+# Fit a linear regression model with HeatDegDays
+model2 <- lm(Net.consumption ~ MeanTemp + HeatDegDays, data = edata)
+
+# Summarize the model
+summary(model2)
+
+```
+```{r}
+#Define function to calculate heat-deg-day
+calculate_heat_deg_days <- function(temperatures) {
+  base_temperature <- 18.3  # Base temperature in Celsius
+  hdd <- base_temperature - temperatures
+  hdd[hdd < 0] <- 0  # Set negative values to zero
+  return(hdd)
+}
+```
+```{r}
+# Define the temperatures
+temperatures <- c(-40, -20, 0, 20, 40)
+
+# Calculate HeatDegDays for each temperature
+heat_deg_days <- calculate_heat_deg_days(temperatures)  # You need to define this function based on your data
+
+
+
+```
+
+
+```{r cache=TRUE}
+# Define the function to calculate estimated consumption using the new model
+model2 <- function(mean_temp, heat_deg_days) {
+  consumption <- -20.30171 + 1.49900 * mean_temp + 2.02649 * heat_deg_days
+  return(consumption)
+}
+
+# Define the temperatures
+temperatures <- c(-40, -20, 0, 20, 40)
+
+# Calculate the estimated consumption using the new model
+estimated_model2 <- model2(temperatures, 0)  # Assuming HeatDegDays is 0 for simplicity
+
+# Print the results
+for (i in 1:length(temperatures)) {
+  cat("At outside temperature", temperatures[i], "°C, estimated average electricity consumption with the new model is", estimated_model2[i], "\n")
+}
+
+```
+```{r cache=TRUE}
+
+# Load necessary libraries
+library(ggplot2)
+
+# Fit a linear regression model with HeatDegDays
+model2 <- lm(Net.consumption ~ MeanTemp + HeatDegDays, data = edata)
+
+# Create scatter plot with overlayed model 2
+ggplot(edata, aes(x = MeanTemp, y = Net.consumption, color = HeatDegDays)) +
+  geom_point() +  # Add points for the data, color by HeatDegDays
+ geom_abline(intercept = coef(model2)[1], slope = coef(model2)[2], color = "red") +  # Overlay model 2
+  labs(x = "Mean Temperature", y = "Net Consumption", title = "Scatter Plot with Model 2 Overlay") +  # Add labels
+  theme_minimal()  # Set minimal theme
+
+
+
+
+
+```
+```{r cache=TRUE}
+# Extract coefficients from model2
+coefficients_model2 <- coef(model2)
+
+# Define Mean Temperatures for estimation
+mean_temperatures <- c(-40, -20, 0, 20, 40)
+
+# Define HeatDegDays for estimation 
+heat_deg_days <- calculate_heat_deg_days(mean_temperatures)
+
+# Calculate Net Consumption using model2
+estimated_net_consumption <- coefficients_model2[1] + coefficients_model2[2] * mean_temperatures + coefficients_model2[3] * heat_deg_days
+
+# Print the estimated values
+estimated_values <- data.frame(Mean_Temperature = mean_temperatures, HeatDegDays = heat_deg_days, Estimated_Net_Consumption = estimated_net_consumption)
+print(estimated_values)
+
+
+```
+
+```{r cache=TRUE}
+# Fit a linear regression model with HeatDegDays
+model2 <- lm(Net.consumption ~ MeanTemp + HeatDegDays, data = edata)
+
+# Extract coefficients from model2
+coefficients_model2 <- coef(model2)
+
+# Define Mean Temperatures for estimation
+mean_temperatures <- c(-40, -20, 0, 20, 40)
+
+# Define HeatDegDays for estimation (you need to define this function based on your data)
+heat_deg_days <- calculate_heat_deg_days(mean_temperatures)
+
+# Calculate Net Consumption using model2
+estimated_net_consumption <- coefficients_model2[1] + coefficients_model2[2] * mean_temperatures + coefficients_model2[3] * heat_deg_days
+
+# Add the additional temperature points to the plot
+additional_data <- data.frame(MeanTemp = mean_temperatures, Net.consumption = estimated_net_consumption )
+
+# Create scatter plot with overlayed model 2 and additional data
+ggplot(edata, aes(x = MeanTemp, y = Net.consumption)) +
+  geom_point(aes(color = as.factor(HeatDegDays))) +  # Add points for the original data, color by HeatDegDays
+  geom_point(data = additional_data, aes(x = MeanTemp, y = Net.consumption, color = "Estimated Value"), size = 3) +  # Add points for additional temperatures
+  geom_abline(intercept = coefficients_model2[1], slope = coefficients_model2[2], color = "red") +  # Overlay model 2
+  labs(x = "Mean Temperature", y = "Net Consumption", title = "Scatter Plot with Model 2 Overlay") +  # Add labels
+  theme_minimal() +  # Set minimal theme
+  scale_color_manual(name = "Legend", 
+                     values = c("red", "blue"), 
+                     labels = c("Estimated Value", "HeatDegDays"))  # Add legend for red points
+
+
+
+
+
+```
+
